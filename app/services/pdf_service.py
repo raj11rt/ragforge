@@ -1,8 +1,10 @@
 from pathlib import Path
 from pypdf import PdfReader
 from uuid import uuid4
+from app.api import documents
 from app.rag.chunker import DocumentChunker
 from app.rag.schemas import ChunkingConfig
+from app.rag.vector_store import VectorStoreService
 
 
 class PDFService:
@@ -52,10 +54,13 @@ class PDFService:
         )
 
         chunker = DocumentChunker(config)
-        chunks = chunker.split_text(extracted["text"])
+        documents = chunker.split_text(extracted["text"])
+
+        VectorStoreService().add_documents(documents)
+
 
         return {
             **extracted,
-            "chunks": chunks,
-            "num_chunks": len(chunks),
+            "chunks": documents,
+            "num_chunks": len(documents),
         }
