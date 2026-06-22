@@ -1,6 +1,8 @@
 from pathlib import Path
 from pypdf import PdfReader
 from uuid import uuid4
+from app.rag.chunker import DocumentChunker
+from app.rag.schemas import ChunkingConfig
 
 
 class PDFService:
@@ -34,4 +36,26 @@ class PDFService:
             "text": "\n".join(pages_text),
             "num_pages": len(reader.pages),
             "num_characters": total_chars,
+        }
+    
+    @staticmethod
+    def extract_and_chunk(
+        file_path,
+        chunk_size: int = 512,
+        chunk_overlap: int = 50,
+    ):
+        extracted = PDFService.extract_text(file_path)
+
+        config = ChunkingConfig(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+
+        chunker = DocumentChunker(config)
+        chunks = chunker.split_text(extracted["text"])
+
+        return {
+            **extracted,
+            "chunks": chunks,
+            "num_chunks": len(chunks),
         }

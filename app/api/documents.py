@@ -14,12 +14,17 @@ async def upload_document(file: UploadFile = File(...)):
         )
 
     saved_path = PDFService.save_pdf(file)
-    result = PDFService.extract_text(saved_path)
+    result = PDFService.extract_and_chunk(
+        saved_path,
+        chunk_size=512,
+        chunk_overlap=50,
+    )
 
     return {
         "filename": file.filename,
         "saved_path": str(saved_path),
         "pages": result["num_pages"],
         "characters": result["num_characters"],
-        "status": "uploaded successfully"
+        "status": "uploaded successfully",
+        "chunks_created": result["num_chunks"]
     }
