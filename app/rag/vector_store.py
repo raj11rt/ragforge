@@ -1,7 +1,8 @@
 import chromadb
 
+from app.api import documents
 from app.rag.embedder import EmbeddingService
-
+from uuid import uuid4
 
 class VectorStoreService:
     def __init__(self):
@@ -19,7 +20,7 @@ class VectorStoreService:
 
         embeddings = self.embedding_model.embed_documents(texts)
 
-        ids = [f"chunk_{i}" for i in range(len(texts))]
+        ids = [str(uuid4()) for _ in documents]
 
         self.collection.add(
             ids=ids,
@@ -28,12 +29,19 @@ class VectorStoreService:
             metadatas=metadatas,
         )
 
-    def similarity_search(self, query: str, k: int = 4):
+    def similarity_search(
+        self,
+        query: str,
+        document_id: str,
+        k: int = 4,
+    ):
         embedding = self.embedding_model.embed_query(query)
 
         results = self.collection.query(
             query_embeddings=[embedding],
             n_results=k,
+            where={"document_id": document_id},
         )
 
         return results
+    

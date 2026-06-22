@@ -11,17 +11,16 @@ class DocumentChunker:
             chunk_overlap=config.chunk_overlap,
         )
 
-    def split_text(self, text: str):
+    def split_text(self, text: str, document_id: str):
         text_chunks = self.splitter.split_text(text)
 
-        documents = [
+        return [
             Document(
                 page_content=chunk,
                 metadata={
+                    "document_id": document_id,
                     "chunk_index": index,
                 },
             )
             for index, chunk in enumerate(text_chunks)
         ]
-
-        return documents

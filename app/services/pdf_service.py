@@ -54,13 +54,15 @@ class PDFService:
         )
 
         chunker = DocumentChunker(config)
-        documents = chunker.split_text(extracted["text"])
+        document_id = str(uuid4())
+        documents = chunker.split_text(extracted["text"], document_id=document_id)
 
         VectorStoreService().add_documents(documents)
 
 
         return {
             **extracted,
+            "document_id": document_id,
             "chunks": documents,
             "num_chunks": len(documents),
         }
