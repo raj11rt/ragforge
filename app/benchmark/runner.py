@@ -9,6 +9,7 @@ from app.benchmark.benchmark_retriever import BenchmarkRetriever
 
 from app.rag.generator import GeneratorService
 from app.rag.vector_store import VectorStoreService
+from app.evaluation.evaluator import SimpleEvaluator
 
 
 class BenchmarkRunner:
@@ -72,6 +73,11 @@ class BenchmarkRunner:
                     context=context,
                     question=question.question,
                 )
+                evaluation = SimpleEvaluator.evaluate_single(
+                    question=question.question,
+                    answer=answer,
+                    expected_answer=question.expected_answer,
+                )
 
                 results.append(
                     BenchmarkResult(
@@ -81,7 +87,7 @@ class BenchmarkRunner:
                         top_k=config.top_k,
                         question=question.question,
                         generated_answer=answer,
-                        score=1.0,
+                        score=evaluation["score"],
                     )
                 )
 
