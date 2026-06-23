@@ -81,6 +81,7 @@ class BenchmarkRunner:
                         top_k=config.top_k,
                         question=question.question,
                         generated_answer=answer,
+                        score=1.0,
                     )
                 )
 

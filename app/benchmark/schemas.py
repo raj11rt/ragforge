@@ -14,3 +14,5 @@ class BenchmarkResult(BaseModel):
 
     question: str
     generated_answer: str
+    score: float
+    
