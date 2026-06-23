@@ -11,6 +11,9 @@ from app.rag.generator import GeneratorService
 from app.rag.vector_store import VectorStoreService
 from app.evaluation.evaluator import SimpleEvaluator
 
+from app.db.database import SessionLocal
+from app.db.repository import BenchmarkRepository
+
 
 class BenchmarkRunner:
     def __init__(self):
@@ -20,6 +23,7 @@ class BenchmarkRunner:
         text = DocumentRepository.load_text(document_id)
 
         results = []
+        db = SessionLocal()
 
         configs = generate_configs()
 
@@ -79,20 +83,26 @@ class BenchmarkRunner:
                     expected_answer=question.expected_answer,
                 )
 
-                results.append(
-                    BenchmarkResult(
-                        config_name=str(config),
-                        chunk_size=config.chunk_size,
-                        chunk_overlap=config.chunk_overlap,
-                        top_k=config.top_k,
-                        question=question.question,
-                        generated_answer=answer,
-                        score=evaluation["score"],
-                    )
+                benchmark_result = BenchmarkResult(
+                    config_name=str(config),
+                    chunk_size=config.chunk_size,
+                    chunk_overlap=config.chunk_overlap,
+                    top_k=config.top_k,
+                    question=question.question,
+                    generated_answer=answer,
+                    score=evaluation["score"],
+                )
+
+                results.append(benchmark_result)
+
+                BenchmarkRepository.save_result(
+                    db=db,
+                    result=benchmark_result,
                 )
 
             vector_store.client.delete_collection(
                 collection_name
             )
+        db.close()
 
         return results
