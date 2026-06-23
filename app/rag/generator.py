@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -19,7 +20,8 @@ class GeneratorService:
 You are a RAG assistant.
 
 Answer ONLY from the provided context.
-If the answer is not present, say:
+
+If the answer is not present in the context, reply exactly:
 "I could not find the answer in the provided document."
 
 Context:
@@ -29,6 +31,17 @@ Question:
 {question}
 """
 
-        response = self.llm.invoke(prompt)
+        for attempt in range(3):
+            try:
+                response = self.llm.invoke(prompt)
+                return response.content
 
-        return response.content
+            except Exception as e:
+                print(f"\nAttempt {attempt + 1} failed")
+                print(e)
+
+                if attempt < 2:
+                    print("Waiting 40 seconds before retrying...\n")
+                    time.sleep(40)
+                else:
+                    raise

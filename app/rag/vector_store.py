@@ -1,6 +1,5 @@
 import chromadb
 
-from app.api import documents
 from app.rag.embedder import EmbeddingService
 from uuid import uuid4
 
