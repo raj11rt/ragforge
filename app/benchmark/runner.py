@@ -1,5 +1,11 @@
+from uuid import uuid4
+
 from app.benchmark.config_generator import generate_configs
+from app.benchmark.document_repository import DocumentRepository
+from app.benchmark.pipeline_builder import PipelineBuilder
 from app.benchmark.schemas import BenchmarkResult
+
+from app.benchmark.benchmark_retriever import BenchmarkRetriever
 
 from app.rag.generator import GeneratorService
 from app.rag.vector_store import VectorStoreService
@@ -8,28 +14,57 @@ from app.rag.vector_store import VectorStoreService
 class BenchmarkRunner:
     def __init__(self):
         self.generator = GeneratorService()
-        self.vector_store = VectorStoreService()
 
-    def run(
-        self,
-        document_id: str,
-        questions: list,
-    ):
+    def run(self, document_id: str, questions: list):
+        text = DocumentRepository.load_text(document_id)
+
         results = []
 
         configs = generate_configs()
 
         for config in configs:
 
+            documents = PipelineBuilder.build_documents(
+                text=text,
+                config=config,
+                document_id=document_id,
+            )
+
+            vector_store = VectorStoreService()
+
+            collection_name = f"benchmark_{uuid4().hex}"
+
+            collection = vector_store.client.get_or_create_collection(
+                name=collection_name
+            )
+
+            texts = [doc.page_content for doc in documents]
+            metadatas = [doc.metadata for doc in documents]
+
+            embeddings = (
+                vector_store.embedding_model.embed_documents(texts)
+            )
+
+            ids = [
+                f"{collection_name}_{i}"
+                for i in range(len(texts))
+            ]
+
+            collection.add(
+                ids=ids,
+                documents=texts,
+                embeddings=embeddings,
+                metadatas=metadatas,
+            )
+
+            retriever = BenchmarkRetriever(collection)
+
             for question in questions:
 
-                retrieved = self.vector_store.similarity_search(
+                contexts = retriever.retrieve(
                     query=question.question,
-                    document_id=document_id,
                     k=config.top_k,
                 )
-
-                contexts = retrieved["documents"][0]
 
                 context = "\n\n".join(contexts)
 
@@ -41,9 +76,16 @@ class BenchmarkRunner:
                 results.append(
                     BenchmarkResult(
                         config_name=str(config),
+                        chunk_size=config.chunk_size,
+                        chunk_overlap=config.chunk_overlap,
+                        top_k=config.top_k,
                         question=question.question,
                         generated_answer=answer,
                     )
                 )
+
+            vector_store.client.delete_collection(
+                collection_name
+            )
 
         return results

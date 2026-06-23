@@ -8,5 +8,9 @@ class BenchmarkQuestion(BaseModel):
 
 class BenchmarkResult(BaseModel):
     config_name: str
+    chunk_size: int
+    chunk_overlap: int
+    top_k: int
+
     question: str
     generated_answer: str

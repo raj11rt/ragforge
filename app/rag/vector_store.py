@@ -44,3 +44,11 @@ class VectorStoreService:
 
         return results
     
+    def create_temp_collection(
+        self,
+        collection_name: str,
+    ):
+        return self.client.get_or_create_collection(
+            name=collection_name
+        )
+    

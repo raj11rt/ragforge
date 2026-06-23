@@ -54,6 +54,10 @@ class PDFService:
 
         chunker = DocumentChunker(config)
         document_id = str(uuid4())
+        PDFService.save_extracted_text(
+            document_id=document_id,
+            text=extracted["text"]
+        )
         documents = chunker.split_text(extracted["text"], document_id=document_id)
 
         VectorStoreService().add_documents(documents)
@@ -65,3 +69,15 @@ class PDFService:
             "chunks": documents,
             "num_chunks": len(documents),
         }
+    
+    @staticmethod
+    def save_extracted_text(document_id: str, text: str):
+        extracted_dir = Path("app/storage/extracted")
+        extracted_dir.mkdir(parents=True, exist_ok=True)
+
+        file_path = extracted_dir / f"{document_id}.txt"
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(text)
+
+        return file_path
