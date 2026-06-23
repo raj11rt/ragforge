@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from app.api.documents import router as document_router
 from app.api.query import router as query_router
+from app.api.leaderboard import router as leaderboard_router
+from app.api.experiments import router as experiment_router
 
 app = FastAPI(
     title="RAGForge",
@@ -10,7 +12,16 @@ app = FastAPI(
 
 app.include_router(document_router, prefix="/documents", tags=["Documents"])
 app.include_router(query_router, prefix="/query", tags=["Query"])
-
+app.include_router(
+    leaderboard_router,
+    prefix="/leaderboard",
+    tags=["Leaderboard"],
+)
+app.include_router(
+    experiment_router,
+    prefix="/experiments",
+    tags=["Experiments"],
+)
 
 @app.get("/")
 def root():

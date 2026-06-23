@@ -19,7 +19,7 @@ class BenchmarkRunner:
     def __init__(self):
         self.generator = GeneratorService()
 
-    def run(self, document_id: str, questions: list):
+    def run(self, document_id: str, questions: list, experiment_id: int):
         text = DocumentRepository.load_text(document_id)
 
         results = []
@@ -98,11 +98,12 @@ class BenchmarkRunner:
                 BenchmarkRepository.save_result(
                     db=db,
                     result=benchmark_result,
+                    experiment_id=experiment_id,
                 )
 
             vector_store.client.delete_collection(
                 collection_name
             )
-        db.close()
+        
 
         return results
