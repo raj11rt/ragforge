@@ -21,6 +21,7 @@ async def upload_document(file: UploadFile = File(...)):
     )
 
     return {
+        "document_id": result["document_id"],
         "filename": file.filename,
         "saved_path": str(saved_path),
         "pages": result["num_pages"],

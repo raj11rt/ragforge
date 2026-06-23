@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.rag.generator import GeneratorService
-from app.rag.retriever import RetrieverService
+from app.rag.vector_store import VectorStoreService
 
 router = APIRouter()
 
@@ -13,22 +13,25 @@ class QueryRequest(BaseModel):
 
 
 @router.post("/")
-def query_document(request: QueryRequest):
-    results = RetrieverService().retrieve(
+def query(request: QueryRequest):
+    vector_store = VectorStoreService()
+
+    results = vector_store.similarity_search(
         query=request.question,
         document_id=request.document_id,
         k=4,
     )
 
     contexts = results["documents"][0]
-    combined_context = "\n\n".join(contexts)
+    context = "\n\n".join(contexts)
 
     answer = GeneratorService().generate(
-        context=combined_context,
+        context=context,
         question=request.question,
     )
 
     return {
         "answer": answer,
         "retrieved_chunks": len(contexts),
+        "document_id": request.document_id,
     }

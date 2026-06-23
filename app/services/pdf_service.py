@@ -1,7 +1,6 @@
 from pathlib import Path
 from pypdf import PdfReader
 from uuid import uuid4
-from app.api import documents
 from app.rag.chunker import DocumentChunker
 from app.rag.schemas import ChunkingConfig
 from app.rag.vector_store import VectorStoreService
