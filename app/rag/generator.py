@@ -1,5 +1,6 @@
 import os
 import time
+from urllib import response
 
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -33,8 +34,12 @@ Question:
 
         for attempt in range(3):
             try:
-                response = self.llm.invoke(prompt)
-                return response.content
+                try:
+                    response = self.llm.invoke(prompt)
+                    return response.content
+
+                except Exception as e:
+                    return f"LLM_ERROR: {str(e)}"
 
             except Exception as e:
                 print(f"\nAttempt {attempt + 1} failed")

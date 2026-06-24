@@ -35,7 +35,7 @@ class BenchmarkRunner:
                 document_id=document_id,
             )
 
-            vector_store = VectorStoreService()
+            vector_store = VectorStoreService(embedding_model_name=config.embedding_model)
 
             collection_name = f"benchmark_{uuid4().hex}"
 
@@ -84,7 +84,11 @@ class BenchmarkRunner:
                 )
 
                 benchmark_result = BenchmarkResult(
-                    config_name=str(config),
+                    config_name=(
+                        f"{config.embedding_model} | "
+                        f"chunk={config.chunk_size} | "
+                        f"top_k={config.top_k}"
+                    ),
                     chunk_size=config.chunk_size,
                     chunk_overlap=config.chunk_overlap,
                     top_k=config.top_k,

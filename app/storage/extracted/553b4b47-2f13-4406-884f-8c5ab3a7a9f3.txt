@@ -1,0 +1,41 @@
+Short Report
+Networking Devices and Initial Configuration
+Prepared by Raj Tiwari
+Course completion note: The uploaded certificate confirms successful completion of "Networking Devices 
+and Initial Configuration" through Cisco Networking Academy on 12 Apr 2026.
+Overview. This course introduced the basic working of networking devices and the first steps required 
+to configure and verify them. The activities helped me connect theory with hands-on practice by 
+showing how devices such as switches and end hosts communicate inside a LAN.
+1. Key concepts learned
+ Role of networking devices: I understood the purpose of switches, end devices, and ports in 
+connecting systems inside a network.
+ MAC addressing: I learned that each device has a unique MAC address used by switches to make 
+forwarding decisions at Layer 2.
+ MAC address table: The switch stores learned source MAC addresses against specific ports, which 
+helps it send frames more efficiently.
+ Frame forwarding logic: I practiced how a switch handles known unicast, unknown unicast, 
+broadcast, and the importance of the incoming port.
+ Initial device configuration: The course strengthened the basics of setting up network devices, 
+checking interfaces, and understanding initial connectivity.
+ Verification mindset: I learned to read the given topology, source and destination MAC addresses, 
+and then decide how the frame travels in the network.
+2. Screenshots of lab activities
+The following screenshots are from my lab-based practice. They demonstrate switch forwarding 
+behavior using source MAC, destination MAC, and the MAC address table.
+Lab Screenshot 1: Frame details, MAC table, and network 
+topology used to decide switch forwarding.
+Lab Screenshot 2: Answer-selection interface for 
+identifying the forwarding ports and frame behavior.
+3. Practical understanding
+ I understood that a switch first checks the source MAC address and learns it on the port from 
+which the frame arrives.
+ I learned that if the destination MAC address is not found in the MAC table, the frame is treated as 
+an unknown unicast and is forwarded only through relevant other active ports, not back to the 
+incoming port.
+ The lab improved my ability to analyze port-by-port forwarding decisions instead of guessing, 
+which is important for real troubleshooting.
+ This practical work gave me a clearer understanding of how communication happens inside a local 
+area network and how switches reduce unnecessary traffic once MAC entries are learned.
+Conclusion. Overall, the course gave me a strong foundation in networking device behavior, 
+especially switch operation and initial configuration. The lab exercises made the concepts easier to 
+understand because I could apply MAC learning and frame forwarding rules in a real example.
