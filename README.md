@@ -148,31 +148,27 @@ uv run streamlit run dashboard.py
 uv run pytest
 ```
 
----
-
-## 📸 Screenshots & Uploads
-
-To customize this README with actual dashboard screenshots, upload the following images into your `assets/` directory matching these filenames:
+## 📸 Screenshots
 
 #### 1. System Architecture Diagram
-*Save as:* `assets/architecture.png`
-Showcases the relationship between the Dashboard, FastAPI, PostgreSQL, ChromaDB, and Google Gemini LLM.
+![System Architecture](assets/architecture.png)
+*Relationship between the Dashboard, FastAPI, PostgreSQL, ChromaDB, and Google Gemini LLM.*
 
 #### 2. Tab 1 - Upload & Run
-*Save as:* `assets/dashboard_upload_run.png`
-Demonstrates document statistics cards and the real-time background status polling loader.
+![Upload & Run](assets/dashboard_upload_run.png)
+*Document statistics cards and the real-time background status polling loader.*
 
 #### 3. Tab 2 - Leaderboard
-*Save as:* `assets/dashboard_leaderboard.png`
-Shows the ranked configuration leaderboard and the highlight banner marking the winning config.
+![Leaderboard](assets/dashboard_leaderboard.png)
+*Ranked configuration leaderboard and the highlight banner marking the winning config.*
 
 #### 4. Tab 3 - Analytics Charts
-*Save as:* `assets/dashboard_charts.png`
-Visualizes score metric breakdowns using interactive charts.
+![Analytics Charts](assets/dashboard_charts.png)
+*Score metric breakdowns visualized using interactive charts.*
 
 #### 5. Tab 4 - Detailed Results & Export
-*Save as:* `assets/dashboard_details.png`
-Displays the detailed question-answer-metric table and the CSV download trigger.
+![Detailed Results & Export](assets/dashboard_details.png)
+*Detailed question-answer-metric table and the CSV download trigger.*
 
 ---
 
