@@ -42,3 +42,16 @@ class ExperimentRepository:
             )
             .all()
         )
+
+    @staticmethod
+    def update_status(db, experiment_id: int, status: str):
+        experiment = (
+            db.query(ExperimentDB)
+            .filter(ExperimentDB.id == experiment_id)
+            .first()
+        )
+        if experiment:
+            experiment.status = status
+            db.commit()
+            db.refresh(experiment)
+        return experiment

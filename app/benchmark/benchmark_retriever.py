@@ -1,10 +1,7 @@
-from app.rag.embedder import EmbeddingService
-
-
 class BenchmarkRetriever:
-    def __init__(self, collection):
+    def __init__(self, collection, embedding_model):
         self.collection = collection
-        self.embedding_model = EmbeddingService().get_embeddings()
+        self.embedding_model = embedding_model
 
     def retrieve(self, query: str, k: int):
         embedding = self.embedding_model.embed_query(query)
@@ -14,4 +11,4 @@ class BenchmarkRetriever:
             n_results=k,
         )
 
-        return results["documents"][0]
+        return results["documents"][0]

@@ -1,7 +1,5 @@
-from sqlalchemy import Column
-from sqlalchemy import Float
-from sqlalchemy import Integer
-from sqlalchemy import String
+from datetime import datetime, timezone
+from sqlalchemy import Column, Float, Integer, String, DateTime
 
 from app.db.database import Base
 
@@ -20,9 +18,14 @@ class BenchmarkResultDB(Base):
     question = Column(String)
 
     generated_answer = Column(String)
-
     score = Column(Float)
+    answer_relevancy = Column(Float, nullable=True)
+    faithfulness = Column(Float, nullable=True)
+    context_precision = Column(Float, nullable=True)
+    context_recall = Column(Float, nullable=True)
+    overall_score = Column(Float, nullable=True)
     experiment_id = Column(Integer)
+
 
 class ExperimentDB(Base):
     __tablename__ = "experiments"
@@ -32,3 +35,7 @@ class ExperimentDB(Base):
     document_id = Column(String)
 
     name = Column(String)
+    status = Column(String, default="PENDING")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+

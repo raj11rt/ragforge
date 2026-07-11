@@ -42,17 +42,22 @@ RAGForge solves this problem by automatically generating and benchmarking multip
 
 * Multi-Configuration Testing
 * Automated Retrieval Evaluation
+* Multi-Metric RAGAS-like Evaluation (Faithfulness, Answer Relevancy, Context Precision, Context Recall)
 * Answer Generation
 * Experiment Tracking
 * Leaderboard Ranking
+* Asynchronous Background Evaluation Runs
 
 ### Dashboard
 
 * Upload Documents
 * Run Benchmarks
+* Real-time Background Job Progress Tracking
 * View Leaderboard
+* Performance Analytics Charts (Altair/Streamlit)
 * Experiment History
 * Experiment Details
+* Downloadable CSV Experiment Reports
 
 ---
 
@@ -194,6 +199,12 @@ uv run uvicorn app.main:app --reload
 uv run streamlit run dashboard.py
 ```
 
+### Run Tests
+
+```bash
+uv run pytest
+```
+
 ---
 
 ## 📊 API Endpoints
@@ -271,14 +282,9 @@ Example embedding models:
 
 ## 🔮 Future Improvements
 
-* RAGAS Integration
-* Background Benchmark Jobs
-* Redis Queue
-* Progress Tracking
-* Benchmark Comparison Charts
+* Redis Queue (for production-scale distributed tasks)
 * Multi-Document Evaluation
-* Advanced Metrics Dashboard
-* Export Benchmark Reports
+* User Management and Authentication
 
 ---
 

@@ -9,7 +9,7 @@ from app.benchmark.benchmark_retriever import BenchmarkRetriever
 
 from app.rag.generator import GeneratorService
 from app.rag.vector_store import VectorStoreService
-from app.evaluation.evaluator import SimpleEvaluator
+from app.evaluation.evaluator import RagasEvaluator
 
 from app.db.database import SessionLocal
 from app.db.repository import BenchmarkRepository
@@ -28,14 +28,15 @@ class BenchmarkRunner:
         configs = generate_configs()
 
         for config in configs:
-
             documents = PipelineBuilder.build_documents(
                 text=text,
                 config=config,
                 document_id=document_id,
             )
 
-            vector_store = VectorStoreService(embedding_model_name=config.embedding_model)
+            vector_store = VectorStoreService(
+                embedding_model_name=config.embedding_model
+            )
 
             collection_name = f"benchmark_{uuid4().hex}"
 
@@ -46,14 +47,9 @@ class BenchmarkRunner:
             texts = [doc.page_content for doc in documents]
             metadatas = [doc.metadata for doc in documents]
 
-            embeddings = (
-                vector_store.embedding_model.embed_documents(texts)
-            )
+            embeddings = vector_store.embedding_model.embed_documents(texts)
 
-            ids = [
-                f"{collection_name}_{i}"
-                for i in range(len(texts))
-            ]
+            ids = [f"{collection_name}_{i}" for i in range(len(texts))]
 
             collection.add(
                 ids=ids,
@@ -62,10 +58,12 @@ class BenchmarkRunner:
                 metadatas=metadatas,
             )
 
-            retriever = BenchmarkRetriever(collection)
+            retriever = BenchmarkRetriever(
+                collection=collection,
+                embedding_model=vector_store.embedding_model,
+            )
 
             for question in questions:
-
                 contexts = retriever.retrieve(
                     query=question.question,
                     k=config.top_k,
@@ -77,10 +75,11 @@ class BenchmarkRunner:
                     context=context,
                     question=question.question,
                 )
-                evaluation = SimpleEvaluator.evaluate_single(
+                evaluation = RagasEvaluator.evaluate_single(
                     question=question.question,
                     answer=answer,
                     expected_answer=question.expected_answer,
+                    contexts=contexts,
                 )
 
                 benchmark_result = BenchmarkResult(
@@ -95,6 +94,15 @@ class BenchmarkRunner:
                     question=question.question,
                     generated_answer=answer,
                     score=evaluation["score"],
+                    answer_relevancy=evaluation.get("metrics", {}).get(
+                        "answer_relevancy"
+                    ),
+                    faithfulness=evaluation.get("metrics", {}).get("faithfulness"),
+                    context_precision=evaluation.get("metrics", {}).get(
+                        "context_precision"
+                    ),
+                    context_recall=evaluation.get("metrics", {}).get("context_recall"),
+                    overall_score=evaluation.get("score"),
                 )
 
                 results.append(benchmark_result)
@@ -105,9 +113,6 @@ class BenchmarkRunner:
                     experiment_id=experiment_id,
                 )
 
-            vector_store.client.delete_collection(
-                collection_name
-            )
-        
+            vector_store.client.delete_collection(collection_name)
 
         return results
