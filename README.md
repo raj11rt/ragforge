@@ -1,130 +1,66 @@
 # 🚀 RAGForge
 
-**Automated RAG Optimization & Benchmarking Platform**
+**Automated RAG Pipeline Optimization & Multi-Metric Benchmarking Platform**
 
-RAGForge is a platform for evaluating and optimizing Retrieval-Augmented Generation (RAG) pipelines. Instead of manually experimenting with chunk sizes, embedding models, and retrieval settings, RAGForge automatically benchmarks multiple configurations, evaluates their performance, and stores results for comparison.
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit)](https://streamlit.io)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-61DAFB?style=for-the-badge&logo=chromadb)](https://github.com/chroma-core/chroma)
+[![Ragas](https://img.shields.io/badge/RAGAS-FF6F00?style=for-the-badge)](https://github.com/explodinggradients/ragas)
 
----
-
-##  Problem Statement
-
-Most RAG applications are built using trial and error:
-
-* Which chunk size works best?
-* Which embedding model retrieves the most relevant context?
-* How many documents should be retrieved?
-* Which configuration produces the highest-quality answers?
-
-Developers often guess these values and deploy without systematic evaluation.
-
-RAGForge solves this problem by automatically generating and benchmarking multiple RAG configurations, allowing developers to identify the best-performing setup using measurable results.
+RAGForge is an automated optimization platform designed to solve the "trial-and-error" dilemma of building Retrieval-Augmented Generation (RAG) applications. Instead of guessing parameters, RAGForge automatically benchmarks multiple pipeline configurations (varying chunk sizes, embedding models, and retrieval depths), scores them using multi-metric evaluations, and ranks them on an interactive leaderboard.
 
 ---
 
-##  Features
+## 💡 The Problem
 
-### Document Processing
+Most developers build RAG pipelines by guessing core parameters:
+* *Which chunk size (512 vs. 1024) retrieves the most contextually rich information?*
+* *Which embedding model provides the highest vector similarity matching?*
+* *How many chunks (`top_k`) should be retrieved for optimal generation quality?*
 
-* PDF Upload
-* Text Extraction
-* Document Storage
-* Metadata Tracking
-
-### Retrieval Pipeline
-
-* Configurable Chunk Size
-* Configurable Chunk Overlap
-* Multiple Embedding Models
-* Vector Search with ChromaDB
-* Top-K Retrieval
-
-### Benchmarking Engine
-
-* Multi-Configuration Testing
-* Automated Retrieval Evaluation
-* Multi-Metric RAGAS-like Evaluation (Faithfulness, Answer Relevancy, Context Precision, Context Recall)
-* Answer Generation
-* Experiment Tracking
-* Leaderboard Ranking
-* Asynchronous Background Evaluation Runs
-
-### Dashboard
-
-* Upload Documents
-* Run Benchmarks
-* Real-time Background Job Progress Tracking
-* View Leaderboard
-* Performance Analytics Charts (Altair/Streamlit)
-* Experiment History
-* Experiment Details
-* Downloadable CSV Experiment Reports
+RAGForge replaces subjective guessing with **data-driven benchmarking**.
 
 ---
 
-##  Architecture
+## ✨ Features
 
-![Architecture](assets/architecture.png)
+### 📂 Document Processing
+* **PDF Ingestion & Text Extraction**: Automatic PDF processing and raw text extraction.
+* **Granular Chunking**: Parametric splitting based on token configurations.
+* **Persistent Document Registry**: Extracted text database storage mapped by unique document IDs.
 
-### High-Level Flow
+### ⚙️ Benchmarking Engine
+* **Multi-Configuration Testing**: Benchmarks pipelines concurrently across a configurable parameters matrix.
+* **Asynchronous Execution**: Uses FastAPI background worker tasks to execute heavy evaluations without timing out.
+* **ChromaDB Vector Store isolation**: Automatically provisions and tears down temporary vector indexes for each run.
 
-```text
-User
- │
- ▼
-Streamlit Dashboard
- │
- ▼
-FastAPI Backend
- │
- ├── Upload API
- ├── Benchmark API
- ├── Experiments API
- └── Leaderboard API
- │
- ▼
-Benchmark Runner
- │
- ├── Chunking
- ├── Embedding
- ├── Retrieval
- ├── Generation
- └── Evaluation
- │
- ▼
-PostgreSQL
+### 🧪 Multi-Metric Evaluation (RAGAS-aligned)
+Calculates scores for every generated response across four key dimensions:
+| Metric | Description | What it detects |
+| :--- | :--- | :--- |
+| **Faithfulness** | Measures how grounded the answer is in the retrieved context. | Hallucinations |
+| **Answer Relevancy** | Evaluates how directly the generated answer addresses the question. | Off-topic or generic LLM replies |
+| **Context Precision** | Measures the proportion of relevant chunks in the retrieved context. | Retrieval noise or clutter |
+| **Context Recall** | Checks if all the required information to answer is present in the context. | Incomplete retrieval |
+| **Overall Score** | The harmonic mean of the four dimensions. | Overall pipeline quality |
 
- ▲
- │
-ChromaDB
-```
+### 🖥️ Interactive Streamlit Dashboard
+* **📂 Upload & Run**: Real-time polling interface showing status tracking (`PENDING` -> `RUNNING` -> `COMPLETED`).
+* **🏆 Leaderboard**: Ranked table highlighting the winning pipeline configuration.
+* **📊 Analytics Charts**: Altair-powered visualization of parameters to identify top-performing chunk sizes and models.
+* **🔍 Past Experiments & CSV Export**: Review detailed question-answer-context tables and download them as CSV reports.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-
-* FastAPI
-* Python
-* SQLAlchemy
-* PostgreSQL
-
-### RAG Components
-
-* ChromaDB
-* LangChain
-* HuggingFace Embeddings
-* Google Gemini
-
-### Frontend
-
-* Streamlit
-
-### Infrastructure
-
-* Docker
-* Docker Compose
-* UV Package Manager
+* **Backend API**: FastAPI, Uvicorn
+* **Database**: PostgreSQL (SQLAlchemy ORM)
+* **Vector Store**: ChromaDB (Persistent client)
+* **LLM & Embeddings**: LangChain Google GenAI (Gemini-2.5-Flash), HuggingFace Embeddings (`sentence-transformers/all-MiniLM-L6-v2`, `BAAI/bge-small-en-v1.5`)
+* **Frontend**: Streamlit
+* **Environment & Package Manager**: UV, dotenv
 
 ---
 
@@ -134,174 +70,135 @@ ChromaDB
 ragforge/
 │
 ├── app/
-│   ├── api/
-│   ├── benchmark/
-│   ├── db/
-│   ├── evaluation/
-│   ├── rag/
-│   ├── services/
-│   └── storage/
+│   ├── api/                   # FastAPI route definitions
+│   │   ├── benchmarks.py      # Async benchmark task trigger
+│   │   ├── documents.py       # PDF uploading and processing
+│   │   ├── experiments.py     # Experiment listing & detailed results
+│   │   └── leaderboard.py     # Leaderboard endpoint
+│   │
+│   ├── benchmark/             # Core benchmarking runner
+│   │   ├── runner.py          # Benchmark pipeline executor
+│   │   └── config_generator.py# Active configurations matrix
+│   │
+│   ├── db/                    # PostgreSQL models & repositories
+│   ├── evaluation/            # RAGAS metrics implementation
+│   ├── rag/                   # Chunker, vector store, and generator services
+│   └── main.py                # FastAPI app startup
 │
-├── dashboard.py
-├── create_tables.py
-├── run_benchmark.py
+├── tests/                     # Unit test suite (pytest)
+│   ├── test_database.py       # DB schema & repository tests
+│   └── test_evaluator.py      # Evaluation metric tests
 │
-├── Dockerfile
-├── docker-compose.yml
-│
-├── pyproject.toml
-├── uv.lock
-│
-└── assets/
+├── dashboard.py               # Streamlit Dashboard application
+├── create_tables.py           # Table initialization script
+├── manual_test_leaderboard.py # Manual command-line script
+├── pyproject.toml             # UV dependency specification
+└── assets/                    # Dashboard screenshots and images
 ```
 
 ---
 
-## 🚀 Installation
+## 🚀 Setup & Installation
 
-### Clone Repository
-
+### 1. Clone the Repository
 ```bash
-git clone <https://github.com/raj11rt/ragforge>
+git clone https://github.com/raj11rt/ragforge.git
 cd ragforge
 ```
 
-### Install Dependencies
-
+### 2. Install Dependencies
+Ensure you have `uv` installed, then synchronize the environment:
 ```bash
 uv sync
 ```
 
-### Configure Environment
-
-Create a `.env` file:
-
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory:
 ```env
-GOOGLE_API_KEY=your_gemini_api_key
+GOOGLE_API_KEY=your_gemini_api_key_here
 DATABASE_URL=postgresql://postgres:password@localhost:5432/ragforge
 ```
 
-### Create Database Tables
-
+### 4. Initialize Database Tables
+Create the necessary PostgreSQL tables:
 ```bash
 uv run python create_tables.py
 ```
 
-### Start FastAPI
+---
 
+## 🏃 Running the Application
+
+To run the application locally, you will need to start the FastAPI backend and the Streamlit dashboard:
+
+### 1. Start the FastAPI Server
 ```bash
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --port 8000
 ```
+*The API interactive docs will be available at `http://127.0.0.1:8000/docs`.*
 
-### Start Dashboard
-
+### 2. Start the Streamlit Dashboard
 ```bash
 uv run streamlit run dashboard.py
 ```
+*Access the UI in your browser at `http://localhost:8501`.*
 
-### Run Tests
-
+### 3. Run the Unit Test Suite
 ```bash
 uv run pytest
 ```
 
 ---
 
-## 📊 API Endpoints
+## 📸 Screenshots & Uploads
 
-### Documents
+To customize this README with actual dashboard screenshots, upload the following images into your `assets/` directory matching these filenames:
 
-```http
-POST /documents/upload
-```
+#### 1. System Architecture Diagram
+*Save as:* `assets/architecture.png`
+Showcases the relationship between the Dashboard, FastAPI, PostgreSQL, ChromaDB, and Google Gemini LLM.
 
-Upload and process PDF documents.
+#### 2. Tab 1 - Upload & Run
+*Save as:* `assets/dashboard_upload_run.png`
+Demonstrates document statistics cards and the real-time background status polling loader.
 
-### Benchmarks
+#### 3. Tab 2 - Leaderboard
+*Save as:* `assets/dashboard_leaderboard.png`
+Shows the ranked configuration leaderboard and the highlight banner marking the winning config.
 
-```http
-POST /benchmarks/run
-```
+#### 4. Tab 3 - Analytics Charts
+*Save as:* `assets/dashboard_charts.png`
+Visualizes score metric breakdowns using interactive charts.
 
-Run benchmark experiments.
-
-### Experiments
-
-```http
-GET /experiments
-POST /experiments
-GET /experiments/{id}
-GET /experiments/{id}/results
-```
-
-### Leaderboard
-
-```http
-GET /leaderboard
-```
-
-Retrieve ranked benchmark results.
+#### 5. Tab 4 - Detailed Results & Export
+*Save as:* `assets/dashboard_details.png`
+Displays the detailed question-answer-metric table and the CSV download trigger.
 
 ---
 
-## 📸 Screenshots
+## 🔬 Benchmark Configuration Matrix
 
-### Dashboard
+RAGForge evaluates the following parameter combinations automatically for each uploaded file:
 
-![Dashboard](assets/dashboard.png)
-
-### Leaderboard
-
-![Leaderboard](assets/leaderboard.png)
-
-### Experiment History
-
-![Experiments](assets/experiments.png)
-
-### Experiment Details
-
-![Experiment Details](assets/experiment_details.png)
-
----
-
-## 🔬 Current Benchmark Parameters
-
-RAGForge currently benchmarks:
-
-* Chunk Size
-* Chunk Overlap
-* Top-K Retrieval
-* Embedding Models
-
-Example embedding models:
-
-* sentence-transformers/all-MiniLM-L6-v2
-* BAAI/bge-small-en-v1.5
-
----
-
-## 🔮 Future Improvements
-
-* Redis Queue (for production-scale distributed tasks)
-* Multi-Document Evaluation
-* User Management and Authentication
+* **Embedding Models**:
+  - `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional)
+  - `BAAI/bge-small-en-v1.5` (384-dimensional, highly retrieval-focused)
+* **Chunk Sizes & Overlaps**:
+  - `512` token chunks with a `50` token overlap.
+  - `1024` token chunks with a `100` token overlap.
+* **Retrieval Depth (`top_k`)**:
+  - Top `4` retrieved contexts.
+  - Top `5` retrieved contexts.
 
 ---
 
 ## 👨‍💻 Author
 
-Raj Tiwari
-
-B.Tech Computer Science | AI Engineer Aspirant
+**Raj Tiwari**
+*B.Tech Computer Science | AI Engineer Aspirant*
 
 ---
 
 ## ⭐ Why RAGForge?
 
-Most RAG projects focus on answering questions.
-
-RAGForge focuses on answering a more important question:
-
-> Which RAG pipeline configuration actually performs best?
-
-By automating benchmarking, experiment tracking, and result comparison, RAGForge helps developers build more reliable and measurable RAG systems.
+Most RAG projects focus purely on generating answers. RAGForge shifts the perspective towards quality assurance. By automating pipeline configuration evaluation, experiment tracking, and metric scoring, RAGForge provides the metrics needed to deploy production-grade RAG systems.
