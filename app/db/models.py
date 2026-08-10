@@ -23,7 +23,7 @@ class DocumentChunkDB(Base):
     document_id = Column(String, index=True)
     chunk_index = Column(Integer)
     content = Column(Text)
-    embedding = Column(Vector(384))                  # pgvector: 384-dim for MiniLM / BGE-small
+    embedding = Column(Vector(3072))                 # pgvector: 3072-dim for Google Gemini embeddings
     embedding_model = Column(String)
     benchmark_tag = Column(String, nullable=True)   # NULL = permanent; set = temp benchmark chunk
 
