@@ -1,8 +1,28 @@
 import os
 import time
+import socket
+import threading
 import pandas as pd
 import requests
 import streamlit as st
+
+# Auto-start FastAPI backend in a background thread if not already running
+def ensure_backend_running():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    result = sock.connect_ex(('127.0.0.1', 8000))
+    sock.close()
+    if result != 0:
+        def run_fastapi():
+            import uvicorn
+            from app.main import app
+            uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
+
+        t = threading.Thread(target=run_fastapi, daemon=True)
+        t.start()
+        time.sleep(2)
+
+ensure_backend_running()
 
 st.set_page_config(
     page_title="RAGForge Dashboard",
