@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 import requests
@@ -88,7 +89,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # FastAPI Base URL
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 
 # ==========================================

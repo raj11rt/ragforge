@@ -127,7 +127,43 @@ uv run python create_tables.py
 
 ---
 
-## 🏃 Running the Application
+## 🐳 Running with Docker
+
+You can run the entire stack (PostgreSQL database, FastAPI backend, and Streamlit dashboard) with a single command using Docker Compose:
+
+### 1. Configure Environment Variables
+Create a `.env` file in the root directory (if you haven't already) and add your Gemini API Key:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+```
+*(Note: You do not need to configure `DATABASE_URL` for Docker, as it is preconfigured in `docker-compose.yml` to route to the PostgreSQL service container).*
+
+### 2. Start the Stack
+Run the following command to build and launch all services:
+```bash
+docker compose up --build
+```
+
+Once all containers are running:
+* **Streamlit Frontend Dashboard**: Access at [http://localhost:8501](http://localhost:8501)
+* **FastAPI Interactive Docs**: Access at [http://localhost:8000/docs](http://localhost:8000/docs)
+* **PostgreSQL Database**: Port `5432` is exposed on your local machine.
+
+Database tables are automatically created on startup, so no manual table initialization is needed!
+
+### 3. Stop the Stack
+To stop the services and retain database volume data:
+```bash
+docker compose down
+```
+To also remove database volume data:
+```bash
+docker compose down -v
+```
+
+---
+
+## 🏃 Running the Application (Local Installation)
 
 To run the application locally, you will need to start the FastAPI backend and the Streamlit dashboard:
 
