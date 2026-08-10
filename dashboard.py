@@ -6,7 +6,8 @@ import pandas as pd
 import requests
 import streamlit as st
 
-# Auto-start FastAPI backend in a background thread if not already running
+# Auto-start FastAPI backend in a background thread ONCE per container boot
+@st.cache_resource
 def ensure_backend_running():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
@@ -14,13 +15,17 @@ def ensure_backend_running():
     sock.close()
     if result != 0:
         def run_fastapi():
-            import uvicorn
-            from app.main import app
-            uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
+            try:
+                import uvicorn
+                from app.main import app
+                uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
+            except Exception:
+                pass
 
         t = threading.Thread(target=run_fastapi, daemon=True)
         t.start()
         time.sleep(2)
+    return True
 
 ensure_backend_running()
 
