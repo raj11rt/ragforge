@@ -11,8 +11,9 @@ class RetrieverService:
         document_id: str,
         k: int = 4,
     ):
-        return self.vector_store.similarity_search(
+        results = self.vector_store.similarity_search(
             query=query,
             document_id=document_id,
             k=k,
         )
+        return results["documents"][0]

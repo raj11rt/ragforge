@@ -1,7 +1,31 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Float, Integer, String, DateTime
+from sqlalchemy import Column, Float, Integer, String, DateTime, Text
+from pgvector.sqlalchemy import Vector
 
 from app.db.database import Base
+
+
+class DocumentDB(Base):
+    __tablename__ = "documents"
+
+    id = Column(String, primary_key=True)       # UUID string
+    filename = Column(String, nullable=True)
+    full_text = Column(Text)
+    num_pages = Column(Integer, nullable=True)
+    num_characters = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DocumentChunkDB(Base):
+    __tablename__ = "document_chunks"
+
+    id = Column(String, primary_key=True)           # UUID string
+    document_id = Column(String, index=True)
+    chunk_index = Column(Integer)
+    content = Column(Text)
+    embedding = Column(Vector(384))                  # pgvector: 384-dim for MiniLM / BGE-small
+    embedding_model = Column(String)
+    benchmark_tag = Column(String, nullable=True)   # NULL = permanent; set = temp benchmark chunk
 
 
 class BenchmarkResultDB(Base):
@@ -37,5 +61,6 @@ class ExperimentDB(Base):
     name = Column(String)
     status = Column(String, default="PENDING")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 
 

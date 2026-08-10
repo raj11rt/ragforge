@@ -14,7 +14,7 @@ RUN uv sync --frozen
 COPY . .
 
 # Create runtime directories
-RUN mkdir -p /data/chroma_db app/storage/uploads app/storage/extracted
+RUN mkdir -p app/storage/uploads app/storage/extracted
 
 # HF Spaces requires port 7860 (Streamlit dashboard)
 # FastAPI runs internally on port 8000

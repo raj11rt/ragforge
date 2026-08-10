@@ -1,6 +1,9 @@
 from pathlib import Path
 from pypdf import PdfReader
 from uuid import uuid4
+
+from app.db.database import SessionLocal
+from app.db.models import DocumentDB
 from app.rag.chunker import DocumentChunker
 from app.rag.schemas import ChunkingConfig
 from app.rag.vector_store import VectorStoreService
@@ -38,7 +41,7 @@ class PDFService:
             "num_pages": len(reader.pages),
             "num_characters": total_chars,
         }
-    
+
     @staticmethod
     def extract_and_chunk(
         file_path,
@@ -52,16 +55,22 @@ class PDFService:
             chunk_overlap=chunk_overlap,
         )
 
-        chunker = DocumentChunker(config)
         document_id = str(uuid4())
-        PDFService.save_extracted_text(
+        filename = Path(file_path).name
+
+        # Save document metadata + full text to Supabase
+        PDFService.save_document_to_db(
             document_id=document_id,
-            text=extracted["text"]
+            filename=filename,
+            full_text=extracted["text"],
+            num_pages=extracted["num_pages"],
+            num_characters=extracted["num_characters"],
         )
+
+        chunker = DocumentChunker(config)
         documents = chunker.split_text(extracted["text"], document_id=document_id)
 
         VectorStoreService().add_documents(documents)
-
 
         return {
             **extracted,
@@ -69,15 +78,25 @@ class PDFService:
             "chunks": documents,
             "num_chunks": len(documents),
         }
-    
+
     @staticmethod
-    def save_extracted_text(document_id: str, text: str):
-        extracted_dir = Path("app/storage/extracted")
-        extracted_dir.mkdir(parents=True, exist_ok=True)
-
-        file_path = extracted_dir / f"{document_id}.txt"
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(text)
-
-        return file_path
+    def save_document_to_db(
+        document_id: str,
+        filename: str,
+        full_text: str,
+        num_pages: int,
+        num_characters: int,
+    ):
+        db = SessionLocal()
+        try:
+            doc = DocumentDB(
+                id=document_id,
+                filename=filename,
+                full_text=full_text,
+                num_pages=num_pages,
+                num_characters=num_characters,
+            )
+            db.add(doc)
+            db.commit()
+        finally:
+            db.close()

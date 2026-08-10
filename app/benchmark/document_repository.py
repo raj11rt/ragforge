@@ -1,16 +1,17 @@
-from pathlib import Path
+from app.db.database import SessionLocal
+from app.db.models import DocumentDB
 
 
 class DocumentRepository:
-    STORAGE_DIR = Path("app/storage/extracted")
-
     @classmethod
     def load_text(cls, document_id: str) -> str:
-        file_path = cls.STORAGE_DIR / f"{document_id}.txt"
-
-        if not file_path.exists():
-            raise FileNotFoundError(
-                f"Document {document_id} not found"
-            )
-
-        return file_path.read_text(encoding="utf-8")
+        db = SessionLocal()
+        try:
+            doc = db.query(DocumentDB).filter(DocumentDB.id == document_id).first()
+            if not doc:
+                raise FileNotFoundError(
+                    f"Document {document_id} not found in database"
+                )
+            return doc.full_text
+        finally:
+            db.close()

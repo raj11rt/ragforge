@@ -5,8 +5,6 @@ from app.benchmark.document_repository import DocumentRepository
 from app.benchmark.pipeline_builder import PipelineBuilder
 from app.benchmark.schemas import BenchmarkResult
 
-from app.benchmark.benchmark_retriever import BenchmarkRetriever
-
 from app.rag.generator import GeneratorService
 from app.rag.vector_store import VectorStoreService
 from app.evaluation.evaluator import RagasEvaluator
@@ -38,34 +36,20 @@ class BenchmarkRunner:
                 embedding_model_name=config.embedding_model
             )
 
-            collection_name = f"benchmark_{uuid4().hex}"
+            # Unique tag for this benchmark config run
+            benchmark_tag = f"benchmark_{uuid4().hex}"
 
-            collection = vector_store.client.get_or_create_collection(
-                name=collection_name
-            )
-
-            texts = [doc.page_content for doc in documents]
-            metadatas = [doc.metadata for doc in documents]
-
-            embeddings = vector_store.embedding_model.embed_documents(texts)
-
-            ids = [f"{collection_name}_{i}" for i in range(len(texts))]
-
-            collection.add(
-                ids=ids,
-                documents=texts,
-                embeddings=embeddings,
-                metadatas=metadatas,
-            )
-
-            retriever = BenchmarkRetriever(
-                collection=collection,
-                embedding_model=vector_store.embedding_model,
+            # Insert chunks into Supabase with the benchmark tag
+            vector_store.add_benchmark_chunks(
+                documents=documents,
+                benchmark_tag=benchmark_tag,
             )
 
             for question in questions:
-                contexts = retriever.retrieve(
+                # Retrieve using pgvector similarity search by tag
+                contexts = vector_store.benchmark_search(
                     query=question.question,
+                    benchmark_tag=benchmark_tag,
                     k=config.top_k,
                 )
 
@@ -113,6 +97,8 @@ class BenchmarkRunner:
                     experiment_id=experiment_id,
                 )
 
-            vector_store.client.delete_collection(collection_name)
+            # Clean up temp benchmark chunks from Supabase
+            vector_store.delete_benchmark_chunks(benchmark_tag)
 
+        db.close()
         return results

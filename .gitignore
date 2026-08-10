@@ -4,7 +4,6 @@ __pycache__/
 .env
 .chroma/
 .vscode/
-chroma_db/
 app/storage/uploads/*
 app/storage/extracted/*
 structure.txt
