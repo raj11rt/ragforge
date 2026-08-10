@@ -3,3 +3,13 @@ __pycache__
 .git
 chroma_db
 app/storage/uploads
+app/storage/extracted
+structure.txt
+tests/
+assets/
+.pytest_cache
+*.md
+docker-compose.yml
+.env
+.env.example
+uv.lock

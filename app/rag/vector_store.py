@@ -1,4 +1,5 @@
 import chromadb
+import os
 
 from app.rag.embedder import EmbeddingService
 from uuid import uuid4
@@ -8,7 +9,8 @@ class VectorStoreService:
         self,
         embedding_model_name="sentence-transformers/all-MiniLM-L6-v2",
     ):
-        self.client = chromadb.PersistentClient(path="./chroma_db")
+        chroma_path = os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        self.client = chromadb.PersistentClient(path=chroma_path)
 
         self.collection = self.client.get_or_create_collection(
             name="documents"

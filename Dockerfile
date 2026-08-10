@@ -1,6 +1,9 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 WORKDIR /app
+
+# Install supervisor (process manager to run API + dashboard together)
+RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
 COPY uv.lock .
@@ -10,6 +13,11 @@ RUN uv sync --frozen
 
 COPY . .
 
-EXPOSE 8000
+# Create runtime directories
+RUN mkdir -p /data/chroma_db app/storage/uploads app/storage/extracted
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# HF Spaces requires port 7860 (Streamlit dashboard)
+# FastAPI runs internally on port 8000
+EXPOSE 7860
+
+CMD ["/usr/bin/supervisord", "-c", "/app/supervisord.conf"]
