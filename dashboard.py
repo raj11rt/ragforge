@@ -16,18 +16,8 @@ except Exception:
 
 # Auto-start FastAPI backend in a background thread ONCE per container boot
 @st.cache_resource
-def ensure_backend_running():
+def start_fastapi_backend():
     backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-
-    # Fast ping check if backend is already responding
-    try:
-        r = requests.get(f"{backend_url}/", timeout=1)
-        if r.status_code == 200:
-            return True
-    except Exception:
-        pass
-
-    # Launch background uvicorn server thread if using localhost backend
     if "127.0.0.1" in backend_url or "localhost" in backend_url:
         def run_fastapi():
             try:
@@ -40,19 +30,17 @@ def ensure_backend_running():
         t = threading.Thread(target=run_fastapi, daemon=True)
         t.start()
 
-        # Poll up to 15 seconds for FastAPI backend server boot
-        for _ in range(15):
-            time.sleep(1)
-            try:
-                r = requests.get(f"{backend_url}/", timeout=1)
-                if r.status_code == 200:
-                    return True
-            except Exception:
-                continue
+start_fastapi_backend()
 
-    return False
+def is_backend_healthy():
+    backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+    try:
+        r = requests.get(f"{backend_url}/", timeout=2)
+        return r.status_code == 200
+    except Exception:
+        return False
 
-backend_is_ready = ensure_backend_running()
+backend_is_ready = is_backend_healthy()
 
 st.set_page_config(
     page_title="RAGForge Dashboard",
