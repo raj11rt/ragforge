@@ -6,28 +6,53 @@ import pandas as pd
 import requests
 import streamlit as st
 
+# Automatically sync Streamlit Cloud secrets to environment variables
+try:
+    for key, val in st.secrets.items():
+        if isinstance(val, str) and key not in os.environ:
+            os.environ[key] = val
+except Exception:
+    pass
+
 # Auto-start FastAPI backend in a background thread ONCE per container boot
 @st.cache_resource
 def ensure_backend_running():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(1)
-    result = sock.connect_ex(('127.0.0.1', 8000))
-    sock.close()
-    if result != 0:
+    backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+
+    # Fast ping check if backend is already responding
+    try:
+        r = requests.get(f"{backend_url}/", timeout=1)
+        if r.status_code == 200:
+            return True
+    except Exception:
+        pass
+
+    # Launch background uvicorn server thread if using localhost backend
+    if "127.0.0.1" in backend_url or "localhost" in backend_url:
         def run_fastapi():
             try:
                 import uvicorn
                 from app.main import app
-                uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
-            except Exception:
-                pass
+                uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+            except Exception as err:
+                print(f"[FastAPI Startup Error] {err}")
 
         t = threading.Thread(target=run_fastapi, daemon=True)
         t.start()
-        time.sleep(2)
-    return True
 
-ensure_backend_running()
+        # Poll up to 15 seconds for FastAPI backend server boot
+        for _ in range(15):
+            time.sleep(1)
+            try:
+                r = requests.get(f"{backend_url}/", timeout=1)
+                if r.status_code == 200:
+                    return True
+            except Exception:
+                continue
+
+    return False
+
+backend_is_ready = ensure_backend_running()
 
 st.set_page_config(
     page_title="RAGForge Dashboard",
@@ -104,6 +129,9 @@ with st.sidebar:
 # Main Title
 st.markdown('<div class="title-gradient">🚀 RAGForge Optimization Engine</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Evaluate embedding models, chunk sizes, and retrieval depths to identify the best pipeline configuration.</div>', unsafe_allow_html=True)
+
+if not backend_is_ready:
+    st.error("⚠️ **FastAPI Backend is taking longer than expected to start or failed to connect to the database.** Please check Streamlit App Settings -> Secrets to ensure `DATABASE_URL` and `GOOGLE_API_KEY` are set.")
 
 # Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
