@@ -15,7 +15,8 @@ pinned: false
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit)](https://streamlit.io)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
-[![ChromaDB](https://img.shields.io/badge/ChromaDB-61DAFB?style=for-the-badge&logo=chromadb)](https://github.com/chroma-core/chroma)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![pgvector](https://img.shields.io/badge/pgvector-336791?style=for-the-badge)](https://github.com/pgvector/pgvector)
 [![Ragas](https://img.shields.io/badge/RAGAS-FF6F00?style=for-the-badge)](https://github.com/explodinggradients/ragas)
 
 RAGForge is an automated optimization platform designed to solve the "trial-and-error" dilemma of building Retrieval-Augmented Generation (RAG) applications. Instead of guessing parameters, RAGForge automatically benchmarks multiple pipeline configurations (varying chunk sizes, embedding models, and retrieval depths), scores them using multi-metric evaluations, and ranks them on an interactive leaderboard.
@@ -36,14 +37,14 @@ RAGForge replaces subjective guessing with **data-driven benchmarking**.
 ## ✨ Features
 
 ### 📂 Document Processing
-* **PDF Ingestion & Text Extraction**: Automatic PDF processing and raw text extraction.
-* **Granular Chunking**: Parametric splitting based on token configurations.
-* **Persistent Document Registry**: Extracted text database storage mapped by unique document IDs.
+* **PDF Ingestion & Text Extraction**: Automatic PDF processing and raw text extraction using `pypdf`.
+* **Granular Chunking**: Parametric splitting based on token and character configurations.
+* **Persistent Document Registry**: Document metadata and full texts stored cleanly in Supabase.
 
 ### ⚙️ Benchmarking Engine
 * **Multi-Configuration Testing**: Benchmarks pipelines concurrently across a configurable parameters matrix.
 * **Asynchronous Execution**: Uses FastAPI background worker tasks to execute heavy evaluations without timing out.
-* **ChromaDB Vector Store isolation**: Automatically provisions and tears down temporary vector indexes for each run.
+* **Supabase (pgvector) Vector Store Isolation**: Provisions, tags, and cleans up temporary vector chunk embeddings directly within PostgreSQL using the `pgvector` extension.
 
 ### 🧪 Multi-Metric Evaluation (RAGAS-aligned)
 Calculates scores for every generated response across four key dimensions:
@@ -66,11 +67,10 @@ Calculates scores for every generated response across four key dimensions:
 ## 🛠️ Tech Stack
 
 * **Backend API**: FastAPI, Uvicorn
-* **Database**: PostgreSQL (SQLAlchemy ORM)
-* **Vector Store**: ChromaDB (Persistent client)
-* **LLM & Embeddings**: LangChain Google GenAI (Gemini-2.5-Flash), HuggingFace Embeddings (`sentence-transformers/all-MiniLM-L6-v2`, `BAAI/bge-small-en-v1.5`)
+* **Database & Vector Store**: Supabase (PostgreSQL with `pgvector` extension for unified relational telemetry & dense vector search)
+* **LLM & Embeddings**: LangChain Google GenAI (Gemini), Groq (LLaMA-3.1-8B-Instant), HuggingFace Embeddings (`sentence-transformers/all-MiniLM-L6-v2`, `BAAI/bge-small-en-v1.5`)
 * **Frontend**: Streamlit
-* **Environment & Package Manager**: UV, dotenv
+* **Environment & Package Manager**: UV, `python-dotenv`
 
 ---
 
@@ -90,9 +90,9 @@ ragforge/
 │   │   ├── runner.py          # Benchmark pipeline executor
 │   │   └── config_generator.py# Active configurations matrix
 │   │
-│   ├── db/                    # PostgreSQL models & repositories
+│   ├── db/                    # Supabase PostgreSQL models & repositories
 │   ├── evaluation/            # RAGAS metrics implementation
-│   ├── rag/                   # Chunker, vector store, and generator services
+│   ├── rag/                   # Chunker, pgvector vector store, and generator services
 │   └── main.py                # FastAPI app startup
 │
 ├── tests/                     # Unit test suite (pytest)
@@ -100,6 +100,7 @@ ragforge/
 │   └── test_evaluator.py      # Evaluation metric tests
 │
 ├── dashboard.py               # Streamlit Dashboard application
+├── streamlit_app.py           # Streamlit Cloud entrypoint redirect
 ├── create_tables.py           # Table initialization script
 ├── manual_test_leaderboard.py # Manual command-line script
 ├── pyproject.toml             # UV dependency specification
@@ -108,7 +109,7 @@ ragforge/
 
 ---
 
-## 🚀 Setup & Installation
+## 🚀 Setup & Installation (Local)
 
 ### 1. Clone the Repository
 ```bash
@@ -126,27 +127,42 @@ uv sync
 Create a `.env` file in the root directory:
 ```env
 GOOGLE_API_KEY=your_gemini_api_key_here
-DATABASE_URL=postgresql://postgres:password@localhost:5432/ragforge
+GROQ_API_KEY=your_groq_api_key_here
+DATABASE_URL=postgresql://postgres.wuupolrgoxlyqxgeakcm:your_password@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
 ```
 
 ### 4. Initialize Database Tables
-Create the necessary PostgreSQL tables:
+Create the necessary PostgreSQL tables and `pgvector` extension:
 ```bash
 uv run python create_tables.py
 ```
 
 ---
 
+## ☁️ Deployment (Streamlit Community Cloud)
+
+1. Deploy the repository `raj11rt/ragforge` on [Streamlit Cloud](https://share.streamlit.io/).
+2. Set **Main file path** to `dashboard.py` (or `streamlit_app.py`).
+3. Under **App Settings -> Secrets**, paste your environment keys in TOML format:
+   ```toml
+   DATABASE_URL = "postgresql://postgres.wuupolrgoxlyqxgeakcm:your_password@aws-0-ap-south-1.pooler.supabase.com:6543/postgres"
+   GOOGLE_API_KEY = "your_gemini_api_key"
+   GROQ_API_KEY = "your_groq_api_key"
+   ```
+4. Deploy! The application will automatically connect to Supabase and boot the background FastAPI service.
+
+---
+
 ## 🐳 Running with Docker
 
-You can run the entire stack (PostgreSQL database, FastAPI backend, and Streamlit dashboard) with a single command using Docker Compose:
+You can run the entire stack (PostgreSQL database with pgvector, FastAPI backend, and Streamlit dashboard) locally using Docker Compose:
 
 ### 1. Configure Environment Variables
-Create a `.env` file in the root directory (if you haven't already) and add your Gemini API Key:
+Create a `.env` file in the root directory and add your keys:
 ```env
 GOOGLE_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
-*(Note: You do not need to configure `DATABASE_URL` for Docker, as it is preconfigured in `docker-compose.yml` to route to the PostgreSQL service container).*
 
 ### 2. Start the Stack
 Run the following command to build and launch all services:
@@ -157,25 +173,10 @@ docker compose up --build
 Once all containers are running:
 * **Streamlit Frontend Dashboard**: Access at [http://localhost:8501](http://localhost:8501)
 * **FastAPI Interactive Docs**: Access at [http://localhost:8000/docs](http://localhost:8000/docs)
-* **PostgreSQL Database**: Port `5432` is exposed on your local machine.
-
-Database tables are automatically created on startup, so no manual table initialization is needed!
-
-### 3. Stop the Stack
-To stop the services and retain database volume data:
-```bash
-docker compose down
-```
-To also remove database volume data:
-```bash
-docker compose down -v
-```
 
 ---
 
-## 🏃 Running the Application (Local Installation)
-
-To run the application locally, you will need to start the FastAPI backend and the Streamlit dashboard:
+## 🏃 Running the Application (Local Mode)
 
 ### 1. Start the FastAPI Server
 ```bash
@@ -194,11 +195,13 @@ uv run streamlit run dashboard.py
 uv run pytest
 ```
 
+---
+
 ## 📸 Screenshots
 
 #### 1. System Architecture Diagram
 ![System Architecture](assets/architecture.png)
-*Relationship between the Dashboard, FastAPI, PostgreSQL, ChromaDB, and Google Gemini LLM.*
+*Relationship between the Dashboard, FastAPI, Supabase (PostgreSQL + pgvector), Groq, and Google Gemini LLM.*
 
 #### 2. Tab 1 - Upload & Run
 ![Upload & Run](assets/dashboard_upload_run.png)
