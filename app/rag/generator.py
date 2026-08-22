@@ -9,9 +9,18 @@ load_dotenv()
 
 class GeneratorService:
     def __init__(self):
+        groq_key = os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            try:
+                import streamlit as st
+                if "GROQ_API_KEY" in st.secrets:
+                    groq_key = st.secrets["GROQ_API_KEY"]
+            except Exception:
+                pass
+
         self.llm = ChatGroq(
             model="llama-3.1-8b-instant",
-            groq_api_key=os.getenv("GROQ_API_KEY"),
+            groq_api_key=groq_key,
             temperature=0,
         )
 

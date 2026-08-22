@@ -49,6 +49,13 @@ class EmbeddingService:
         model_name="models/gemini-embedding-001",
     ):
         api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            try:
+                import streamlit as st
+                if "GOOGLE_API_KEY" in st.secrets:
+                    api_key = st.secrets["GOOGLE_API_KEY"]
+            except Exception:
+                pass
         # Ensure model name is valid for Gemini API
         if not model_name.startswith("models/") and "gemini" in model_name:
             model_name = f"models/{model_name}"

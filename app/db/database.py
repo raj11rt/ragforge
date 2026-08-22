@@ -2,12 +2,25 @@ import os
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+def get_env_var(key: str, default: str = None) -> str:
+    val = os.getenv(key)
+    if val:
+        return val
+    try:
+        import streamlit as st
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return default
+
+DATABASE_URL = get_env_var("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is missing. Please set it in .env or Streamlit App Secrets.")
 
 engine = create_engine(
     DATABASE_URL,
