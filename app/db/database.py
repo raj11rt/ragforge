@@ -22,6 +22,12 @@ DATABASE_URL = get_env_var("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is missing. Please set it in .env or Streamlit App Secrets.")
 
+# SQLAlchemy 2.1+ defaults to psycopg (v3) for plain `postgresql://` URLs.
+# Force psycopg2 dialect since that's what's installed (psycopg2-binary).
+if DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+
 engine = create_engine(
     DATABASE_URL,
     pool_size=5,

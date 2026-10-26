@@ -6,6 +6,14 @@ from langchain_groq import ChatGroq
 
 load_dotenv()
 
+# Groq models in priority order (fallback chain).
+# llama3-8b-8192 and llama-3.1-8b-instant were deprecated/removed for some accounts.
+# See: https://console.groq.com/docs/models
+GROQ_MODEL_FALLBACK_CHAIN = [
+    "llama-3.1-8b-instant",       # Preferred – fast & lightweight
+    "llama-3.3-70b-versatile",    # Fallback – larger but widely available
+]
+
 
 class GeneratorService:
     def __init__(self):
@@ -18,13 +26,25 @@ class GeneratorService:
             except Exception:
                 pass
 
-        self.llm = ChatGroq(
-            model="llama-3.1-8b-instant",
-            groq_api_key=groq_key,
+        # Allow overriding the model via env var; otherwise use the fallback chain.
+        configured_model = os.getenv("GROQ_MODEL", "").strip()
+        self._model_chain = (
+            [configured_model] + GROQ_MODEL_FALLBACK_CHAIN
+            if configured_model
+            else GROQ_MODEL_FALLBACK_CHAIN
+        )
+        self._groq_key = groq_key
+        # Initialize with the first model in the chain.
+        self.llm = self._build_llm(self._model_chain[0])
+
+    def _build_llm(self, model: str) -> ChatGroq:
+        return ChatGroq(
+            model=model,
+            groq_api_key=self._groq_key,
             temperature=0,
         )
 
-    def generate(self, context: str, question: str):
+    def generate(self, context: str, question: str) -> str:
         prompt = f"""
 You are a RAG assistant.
 
@@ -39,22 +59,29 @@ Context:
 Question:
 {question}
 """
+        tried_models = list(self._model_chain)  # copy so we can pop
 
-        for attempt in range(3):
-            try:
+        for model in tried_models:
+            llm = self._build_llm(model)
+            for attempt in range(3):
                 try:
-                    response = self.llm.invoke(prompt)
+                    response = llm.invoke(prompt)
                     return response.content
 
                 except Exception as e:
-                    return f"LLM_ERROR: {str(e)}"
+                    error_msg = str(e)
 
-            except Exception as e:
-                print(f"\nAttempt {attempt + 1} failed")
-                print(e)
+                    # If the model is not found / no access, try next model immediately.
+                    if "model_not_found" in error_msg or "does not exist" in error_msg:
+                        print(f"[GeneratorService] Model '{model}' not found, trying next fallback...")
+                        break  # break inner retry loop, move to next model
 
-                if attempt < 2:
-                    print("Waiting 40 seconds before retrying...\n")
-                    time.sleep(40)
-                else:
-                    raise
+                    # For other transient errors, retry with backoff.
+                    print(f"\n[GeneratorService] Attempt {attempt + 1} with model '{model}' failed: {e}")
+                    if attempt < 2:
+                        print("Waiting 40 seconds before retrying...\n")
+                        time.sleep(40)
+                    else:
+                        break  # exhausted retries for this model, try next
+
+        return "LLM_ERROR: All configured models are unavailable. Please check your GROQ_API_KEY and GROQ_MODEL settings."
